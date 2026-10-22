@@ -3,6 +3,15 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <signal.h>
+
+static volatile sig_atomic_t interrupted = 0;
+
+static void handle_sigint(int sig)
+{
+    (void)sig;
+	interrupted = 1;
+}
 
 void draw_logo(int x, int y, int color)
 {
@@ -72,14 +81,18 @@ int main(int argc, char **argv)
         }
     }
 
-    while (1)
+    signal(SIGINT, handle_sigint);
+
+	printf("\033[?25l");
+
+    while (!interrupted)
     {
         if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1)
         {
             perror("dvd: ioctl");
             return 1;
         }
-
+		
         printf("\033[2J");
         draw_logo(x, y, color);
         fflush(stdout);
@@ -94,4 +107,7 @@ int main(int argc, char **argv)
         if (y <= 1 || y + 2 >= ws.ws_row)
             dy = -dy;
     }
+
+	printf("\033[?25h");
+	return 0;
 }
