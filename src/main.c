@@ -31,7 +31,7 @@ void print_help(void)
 
 int main(int argc, char **argv)
 {
-    int x = 20, y = 10;
+    int x = 1, y = 1;
     int dx = 1, dy = 1;
     int color = 35;
     int speed = 100000;
