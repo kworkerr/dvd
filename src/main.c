@@ -1,9 +1,13 @@
+#define _POSIX_C_SOURCE 199309L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
+
+#include <time.h>
 #include <signal.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 static volatile sig_atomic_t interrupted = 0;
 
@@ -22,11 +26,21 @@ void draw_logo(int x, int y, int color)
     printf("\033[0m");
 }
 
-void print_help(void)
+static void print_help(void)
 {
     printf("dvd - A cool DVD bounce in C.\n\n");
-    printf("--speed N   delay between frames in microseconds\n");
+    printf("--speed N   animation speed (default: 1)\n");
     printf("--color N   logo color, from 1 to 8\n");
+}
+
+static void sleep_us(long delay)
+{
+	struct timespec time = {
+		.tv_sec = delay / 1000000L,
+		.tv_nsec = (delay % 1000000L) * 1000L
+	};
+
+	nanosleep(&time, NULL);
 }
 
 int main(int argc, char **argv)
@@ -34,7 +48,7 @@ int main(int argc, char **argv)
     int x = 1, y = 1;
     int dx = 1, dy = 1;
     int color = 35;
-    int speed = 100000;
+    int speed = 1;
     char *end;
     struct winsize ws;
 
@@ -96,7 +110,13 @@ int main(int argc, char **argv)
         printf("\033[2J");
         draw_logo(x, y, color);
         fflush(stdout);
-        usleep(speed);
+
+		long delay = 100000L / speed;
+
+		if (delay < 1)
+			delay = 1;
+
+		sleep_us(delay);
 
         x += dx;
         y += dy;
